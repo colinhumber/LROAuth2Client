@@ -64,7 +64,11 @@
 
 - (NSString *)accessToken;
 {
-  return [authResponseData objectForKey:@"access_token"];
+  id token = [authResponseData objectForKey:@"access_token"];
+    if ([token isKindOfClass:[NSString class]]) {
+        return token;
+    }
+    return [((NSDictionary *) token) objectForKey:@"token"];
 }
 
 - (NSString *)refreshToken;
