@@ -25,6 +25,7 @@
 @synthesize delegate = _delegate;
 @synthesize accessToken = _accessToken;
 @synthesize debug = _debug;
+@synthesize accessTokenKeyPath = _accessTokenKeyPath;
 
 - (id)initWithClientID:(NSString *)clientID 
                 secret:(NSString *)secret 
