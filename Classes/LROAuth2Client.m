@@ -43,7 +43,7 @@
   return self;
 }
 
-- (void)dealloc;
+- (void)dealloc
 {
   [networkQueue cancelAllOperations];
 }
