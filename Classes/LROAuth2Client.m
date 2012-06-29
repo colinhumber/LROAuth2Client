@@ -14,38 +14,37 @@
 
 #pragma mark -
 
-@implementation LROAuth2Client {
-  NSOperationQueue *_networkQueue;
-}
+@implementation LROAuth2Client
 
-@synthesize clientID;
-@synthesize clientSecret;
-@synthesize redirectURL;
-@synthesize cancelURL;
-@synthesize userURL;
-@synthesize tokenURL;
-@synthesize delegate;
-@synthesize accessToken;
-@synthesize debug;
+@synthesize clientID = _clientID;
+@synthesize clientSecret = _clientSecret;
+@synthesize redirectURL = _redirectURL;
+@synthesize cancelURL = _cancelURL;
+@synthesize userURL = _userURL;
+@synthesize tokenURL = _tokenURL;
+@synthesize delegate = _delegate;
+@synthesize accessToken = _accessToken;
+@synthesize debug = _debug;
 
-- (id)initWithClientID:(NSString *)_clientID 
-                secret:(NSString *)_secret 
+- (id)initWithClientID:(NSString *)clientID 
+                secret:(NSString *)secret 
            redirectURL:(NSURL *)url;
 {
   if (self = [super init]) {
-    clientID = [_clientID copy];
-    clientSecret = [_secret copy];
-    redirectURL = [url copy];
+    self.clientID = [clientID copy];
+    self.clientSecret = [secret copy];
+    self.redirectURL = [url copy];
     requests = [[NSMutableArray alloc] init];
-    debug = NO;
-    _networkQueue = [[NSOperationQueue alloc] init];
+    self.debug = NO;
+    networkQueue = [[NSOperationQueue alloc] init];
+	  self.accessTokenKeyPath = nil;
   }
   return self;
 }
 
 - (void)dealloc;
 {
-  [_networkQueue cancelAllOperations];
+  [networkQueue cancelAllOperations];
 }
 
 #pragma mark -
@@ -55,8 +54,8 @@
 {
   NSDictionary *params = [NSMutableDictionary dictionary];
   [params setValue:@"web_server" forKey:@"type"];
-  [params setValue:clientID forKey:@"client_id"];
-  [params setValue:[redirectURL absoluteString] forKey:@"redirect_uri"];
+  [params setValue:self.clientID forKey:@"client_id"];
+  [params setValue:[self.redirectURL absoluteString] forKey:@"redirect_uri"];
   
   if (additionalParameters) {
     for (NSString *key in additionalParameters) {
@@ -79,9 +78,9 @@
     
     NSDictionary *params = [NSMutableDictionary dictionary];
     [params setValue:@"authorization_code" forKey:@"grant_type"];
-    [params setValue:clientID forKey:@"client_id"];
-    [params setValue:clientSecret forKey:@"client_secret"];
-    [params setValue:[redirectURL absoluteString] forKey:@"redirect_uri"];
+    [params setValue:self.clientID forKey:@"client_id"];
+    [params setValue:self.clientSecret forKey:@"client_secret"];
+    [params setValue:[self.redirectURL absoluteString] forKey:@"redirect_uri"];
     [params setValue:accessCode forKey:@"code"];
     
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:self.tokenURL];
@@ -97,19 +96,19 @@
       [self handleCompletionForAuthorizationRequestOperation:blockOperation];
     }];
       
-    [_networkQueue addOperation:operation];
+    [networkQueue addOperation:operation];
   }
 }
 
-- (void)refreshAccessToken:(LROAuth2AccessToken *)_accessToken;
+- (void)refreshAccessToken:(LROAuth2AccessToken *)accessToken;
 {
-  accessToken = _accessToken;
+  _accessToken = accessToken;
   
   NSDictionary *params = [NSMutableDictionary dictionary];
   [params setValue:@"refresh_token" forKey:@"grant_type"];
-  [params setValue:clientID forKey:@"client_id"];
-  [params setValue:clientSecret forKey:@"client_secret"];
-  [params setValue:[redirectURL absoluteString] forKey:@"redirect_uri"];
+  [params setValue:self.clientID forKey:@"client_id"];
+  [params setValue:self.clientSecret forKey:@"client_secret"];
+  [params setValue:[self.redirectURL absoluteString] forKey:@"redirect_uri"];
   [params setValue:_accessToken.refreshToken forKey:@"refresh_token"];
   
   NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:self.tokenURL];
@@ -125,7 +124,7 @@
     [self handleCompletionForAuthorizationRequestOperation:blockOperation];
   }];
   
-  [_networkQueue addOperation:operation];
+  [networkQueue addOperation:operation];
 }
 
 - (void)handleCompletionForAuthorizationRequestOperation:(LRURLRequestOperation *)operation
@@ -144,13 +143,17 @@
     if ([authData objectForKey:@"access_token"] == nil) {
       NSAssert(NO, @"Unhandled parsing failure");
     }
-    if (accessToken == nil) {
-      accessToken = [[LROAuth2AccessToken alloc] initWithAuthorizationResponse:authData];
-      if ([self.delegate respondsToSelector:@selector(oauthClientDidReceiveAccessToken:)]) {
+    if (self.accessToken == nil) {
+		 
+      _accessToken = [[LROAuth2AccessToken alloc] initWithAuthorizationResponse:authData];
+		 if (self.accessTokenKeyPath != nil) {
+			 self.accessToken.accessTokenKeyPath = self.accessTokenKeyPath;
+		 }		 
+		 if ([self.delegate respondsToSelector:@selector(oauthClientDidReceiveAccessToken:)]) {
         [self.delegate oauthClientDidReceiveAccessToken:self];
       } 
     } else {
-      [accessToken refreshFromAuthorizationResponse:authData];
+      [self.accessToken refreshFromAuthorizationResponse:authData];
       if ([self.delegate respondsToSelector:@selector(oauthClientDidRefreshAccessToken:)]) {
         [self.delegate oauthClientDidRefreshAccessToken:self];
       }

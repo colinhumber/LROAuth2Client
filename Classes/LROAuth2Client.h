@@ -12,19 +12,11 @@
 @class LROAuth2AccessToken;
 
 @interface LROAuth2Client : NSObject {
-  NSString *clientID;
-  NSString *clientSecret;
-  NSURL *redirectURL;
-  NSURL *cancelURL;
-  NSURL *userURL;
-  NSURL *tokenURL;
-  LROAuth2AccessToken *accessToken;
-  NSMutableArray *requests;
-  id<LROAuth2ClientDelegate> __unsafe_unretained delegate;
-  BOOL debug;
-  
  @private
+	NSMutableArray *requests;
   BOOL isVerifying;
+	NSOperationQueue *networkQueue;
+
 }
 @property (nonatomic, copy) NSString *clientID;
 @property (nonatomic, copy) NSString *clientSecret;
@@ -35,14 +27,15 @@
 @property (nonatomic, readonly) LROAuth2AccessToken *accessToken;
 @property (nonatomic, unsafe_unretained) id<LROAuth2ClientDelegate> delegate;
 @property (nonatomic, assign) BOOL debug;
+@property (nonatomic, strong) NSString *accessTokenKeyPath;
 
-- (id)initWithClientID:(NSString *)_clientID 
-                secret:(NSString *)_secret 
+- (id)initWithClientID:(NSString *)clientID 
+                secret:(NSString *)secret 
            redirectURL:(NSURL *)url;
 
 - (NSURLRequest *)userAuthorizationRequestWithParameters:(NSDictionary *)additionalParameters;
 - (void)verifyAuthorizationWithAccessCode:(NSString *)accessCode;
-- (void)refreshAccessToken:(LROAuth2AccessToken *)_accessToken;
+- (void)refreshAccessToken:(LROAuth2AccessToken *)accessToken;
 @end
 
 @interface LROAuth2Client (UIWebViewIntegration) <UIWebViewDelegate>
