@@ -109,7 +109,6 @@
   [params setValue:@"refresh_token" forKey:@"grant_type"];
   [params setValue:self.clientID forKey:@"client_id"];
   [params setValue:self.clientSecret forKey:@"client_secret"];
-  [params setValue:[self.redirectURL absoluteString] forKey:@"redirect_uri"];
   [params setValue:_accessToken.refreshToken forKey:@"refresh_token"];
   
   NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:self.tokenURL];
